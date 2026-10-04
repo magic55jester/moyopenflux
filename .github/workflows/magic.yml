@@ -4,12 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  actions: write
   contents: read
-
-concurrency:
-  group: openflux-exit-node
-  cancel-in-progress: false
 
 jobs:
   openflux:
@@ -135,22 +130,3 @@ jobs:
             --codec=legacy \
             --transport "$TRANSPORT" \
             --url "$DOC_URL"
-
-  restart:
-    needs: openflux
-    # !cancelled(): перезапуск и после успеха, и после ошибки/таймаута,
-    # но не после ручной отмены (Cancel workflow) и не при STOP=true
-    if: ${{ !cancelled() && vars.STOP != 'true' }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - name: Pause
-        run: sleep 30
-
-      - name: Restart workflow
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh workflow run "${{ github.workflow }}" \
-            --repo "${{ github.repository }}" \
-            --ref "${{ github.ref_name }}"
